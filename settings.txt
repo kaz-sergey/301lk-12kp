@@ -1,0 +1,2 @@
+Average sampiling rate: 9.526918374969615
+Quantization step: 0.012890625
