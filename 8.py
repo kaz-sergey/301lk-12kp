@@ -1,47 +1,50 @@
 import numpy as np
 import matplotlib.pyplot as plt
-tmp = []
-pred = 0
-with open("settings.txt") as sett:
-    for i in sett.read().split("\n"):
-        p = i.split(" ")
-        if len(p) ==2:
-            n = float(p[1])
-            tmp.append(n)
-            
 
 
-d_a = np.loadtxt("data.txt", dtype = float)
+data = np.loadtxt('data.txt', dtype=np.float64)
+count = len(data)
+data = data/256*3.3
+settings = np.loadtxt('settings.txt', dtype=np.float64)
 
-x_raw = d_a[:,1]
-y_raw = d_a[:,0]
+sample_rate = settings[0]
+q_step = settings[1]
+time = count / sample_rate
+t = np.linspace(0, time, count)
 
-filter_arr = []
+charge_time = t[data.argmax()]
 
-prev = 0
-for el in y_raw:
-    if abs(el-prev)<=0.1:
-        filter_arr.append(True)
-        prev = el
-    else:
-        #print(el,prev)
-        filter_arr.append(False)
-        
-x = x_raw[filter_arr]
-y = y_raw[filter_arr]
 
-fig, axs = plt.subplots(1,1)
-fig.set_figwidth(8)
-fig.set_figheight(5)
-axs.minorticks_on()
-axs.grid(b=True,which='major',color='cadetblue',linewidth=1.3)
-axs.grid(b=True,which='minor',color='gainsboro')
-axs.set_title('Процесс заряда и разряда конденсатора в RC-цепочке')
-axs.set_xlabel('Время, с')
-axs.set_ylabel('Напряжение, В')
-axs.set_path_effects(path_effects.withTickedStroke())
-line, = axs.plot(x,y,color='blue', marker='o',markersize=1,label = 'V(t)')
-axs.legend(handles=[line])
-axs.text(60,2.6,'Время заряда = 44.33 с')
-axs.text(60,2.3,'Время разряда = 85.14 с')
-plt.show()
+# Указание размера и разрешения фигуры
+fig, ax = plt.subplots(figsize=(10, 7), dpi=200)
+
+# Рисуем линию по заданным параметрам
+ax.plot(t, data, label='$V(t)$', color='tab:green', marker='o', markevery=12, linestyle='-', linewidth=1.5, markersize=5)
+
+# Явное указание максимальных и минимальных значений шкалы по x и y 
+ax.set_xlim(0, time)
+ax.set_ylim(0, max(data) + 0.2)
+
+# Указание названия осей
+ax.set_xlabel('Время, с', size='large')
+ax.set_ylabel('Напряжение, В', size='large')
+
+# Указание названия графика
+ax.set_title('Зависимость напряжения на обкладках конденсатора от времени', size='xx-large', wrap=True)
+
+# Включаем сетку
+ax.minorticks_on()
+ax.grid(which='minor', linestyle=':', color='0.9')
+ax.grid(which='major', linestyle='-', color='0.8')
+
+# Наносим на график текст и коробку для него
+box = {'facecolor': 'green', 'alpha': 0.1, 'pad': 5}
+x_text = time / 4
+y_text = max(data) / 2
+ax.text(x_text, y_text, f'Время заряда: {charge_time:.2f}', bbox=box)
+ax.text(x_text, y_text - 0.3, f'Время разряда: {time - charge_time:.2f}', bbox=box)
+
+# Финальный штрих
+ax.legend() # Легенда
+fig.savefig('8-1-fig.png') # Сохраняем в файл
+plt.show() # Показываем график
