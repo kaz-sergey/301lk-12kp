@@ -3,7 +3,6 @@ import time
 import matplotlib.pyplot as plt
 import numpy as np
 
-
 # Преобразование числа из n_10 в n_2 с.с.
 def decimal_to_binary(number):
     return [int(bit) for bit in bin(number)[2:].zfill(8)]
@@ -39,9 +38,9 @@ def analog_to_digital_conventer():
             signal[i] = 0
     
     b = ''.join(map(str, signal))
-    current_voltage = round((int(b, 2)) * 3.3 / 256, 3)
+    current_voltage = round((int(b, 2)), 3)
 
-    print(f"Current voltage -> {current_voltage}")
+    print(f"Current number -> {current_voltage}")
 
     GPIO.output(dac, 0)
 
@@ -86,46 +85,49 @@ if __name__ == "__main__":
         troyka_reg('on')
 
         # Вычисляем напряжение на конденсаторе
-        capacitor_charge = analog_to_digital_conventer() / 3.3
+        capacitor_charge = analog_to_digital_conventer()
 
         # Конденсатор заряжается
-        while capacitor_charge < 0.94:
+        while capacitor_charge < 245:
             cur_voltage = analog_to_digital_conventer()
             cur_time = time.time() - start_time
             data['voltage'].append(cur_voltage)
-            data['time'].append(cur_time)
+            #data['time'].append(cur_time)
 
-            capacitor_charge = cur_voltage / 3.3
-            led_indicator(capacitor_charge * 100)
-            time.sleep(0.1)
+            capacitor_charge = cur_voltage
+            led_indicator(capacitor_charge * 3.3 / 256 * 100)
+            time.sleep(0.01)
         
         troyka_reg('off')
-
+        t_zar=cur_time
+        
         # Конденсатор разряжается
-        while capacitor_charge > 0.02:
+        while capacitor_charge > 3:
             cur_voltage = analog_to_digital_conventer()
             cur_time = time.time() - start_time
             data['voltage'].append(cur_voltage)
-            data['time'].append(cur_time)
+            #data['time'].append(cur_time)
 
             capacitor_charge = cur_voltage / 3.3
-            led_indicator(capacitor_charge * 100)
-            time.sleep(0.1)
-        
+            led_indicator(capacitor_charge*3.3 / 256 * 100)
+            time.sleep(0.01)
+        t_razr = cur_time-t_zar
         all_time = cur_time
-
+        
+        print(f'\nВремя зарядки конденсатора: {t_zar:.2f} секунд.')
+        print(f'\nВремя разрядки конденсатора: {t_razr:.2f} секунд.')
         print(f'\nОбщая продолжительность эксперимента составила: {all_time:.2f} секунд.')
 
         # Построения графика зависимости напряжения на обкладках конденсатора от времени
        # Построения графика зависимости напряжения на обкладках конденсатора от времени
-        plt.plot(data['time'], data['voltage'])
-        plt.xlabel('t, с')
-        plt.ylabel('U, В')
-        plt.title('Зависимость напряжения на обкладках конденсатора U от времени t')
+        plt.plot(data['voltage'])
+       # plt.xlabel('t, с')
+       # plt.ylabel('U, В')
+        #plt.title('Зависимость напряжения на обкладках конденсатора U от времени t')
         plt.show()
   
         # Вычисление некоторых параметров эксперимента
-        count_of_measurements = len(data['time'])
+        count_of_measurements = len(data)
         av_measurment_period = all_time / count_of_measurements
         av_sampiling_rate = 1 / av_measurment_period
         quant_step = 3.3 / (2 ** 8)
